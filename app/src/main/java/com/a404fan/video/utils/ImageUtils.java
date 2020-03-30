@@ -1,6 +1,7 @@
 package com.a404fan.video.utils;
 
 import android.content.Context;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.a404fan.video.R;
@@ -29,6 +30,7 @@ public class ImageUtils {
         if(context == null){
             return;
         }
+        LogUtils.i("mo--", "加载图片：" + url);
         Glide.with(context)
                 .load(url)
                 .error(def)

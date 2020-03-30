@@ -11,15 +11,24 @@ import io.reactivex.disposables.Disposable;
 import moe.div.mobase.activity.MoBaseActivity;
 
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.GridLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.a404fan.video.R;
 import com.a404fan.video.adapter.BannerAdapter;
 import com.a404fan.video.model.BannerItem;
+import com.a404fan.video.model.VodList;
 import com.a404fan.video.utils.AppUtils;
+import com.a404fan.video.utils.HttpHelper;
+import com.a404fan.video.utils.ImageUtils;
 import com.a404fan.video.utils.JsonUtil;
 import com.a404fan.video.utils.LogUtils;
+import com.a404fan.video.utils.StringUtil;
+import com.a404fan.video.widget.HomeVodListView;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +54,11 @@ public class MainActivity extends MoBaseActivity {
     private LinearSnapHelper mLinearSnapHelper;
     private BannerAdapter mBannerAdapter;
 
+    private HomeVodListView new_movie_hvv;
+    private HomeVodListView new_opera_hvv;
+    private HomeVodListView new_anime_hvv;
+    private HomeVodListView new_variety_hvv;
+
     private int mCurrentPosition;               // 当前的索引
     private boolean isSlidingByHand = false;    //表示是否是手在滑动
     private boolean isSlidingAuto = true;       //表示是否自动滑动
@@ -59,6 +73,18 @@ public class MainActivity extends MoBaseActivity {
         search_et = findViewById(R.id.search_et);
         search_tv = findViewById(R.id.search_tv);
 
+        new_movie_hvv = findViewById(R.id.new_movie_hvv);
+        new_movie_hvv.setTitle("最新电影");
+
+        new_opera_hvv = findViewById(R.id.new_opera_hvv);
+        new_opera_hvv.setTitle("最新连续剧");
+
+        new_anime_hvv = findViewById(R.id.new_anime_hvv);
+        new_anime_hvv.setTitle("最新动漫");
+
+        new_variety_hvv = findViewById(R.id.new_variety_hvv);
+        new_variety_hvv.setTitle("最新综艺");
+
         // 初始化 RecyclerView
         mBannerLM = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         banner_rv.setLayoutManager(mBannerLM);
@@ -70,6 +96,7 @@ public class MainActivity extends MoBaseActivity {
 
     @Override
     protected void initData() {
+        // 模拟数据的轮播图
         String json = "[\n" +
             "        {\n" +
             "            \"click\": \"因为太怕痛就全点防御力了\",\n" +
@@ -109,6 +136,34 @@ public class MainActivity extends MoBaseActivity {
         // 设置展示到中间
         AppUtils.MoveToPosition(mBannerLM, banner_rv, mBannerAdapter.getInitPosition());
         mCurrentPosition = mBannerAdapter.getInitPosition();
+        // 获取最新电影
+        Disposable newMovieSubscribe = HttpHelper.getNewMovieList()
+            .map(s -> JsonUtil.parseObject(s, VodList.class))
+            .map(VodList::getList)
+            .doOnError(this::handlerNewVoidListError)
+            .doOnNext(new_movie_hvv::show)
+            .subscribe();
+        // 获取最新连续剧
+        Disposable newOperaSubscribe = HttpHelper.getNewOperaList()
+            .map(s -> JsonUtil.parseObject(s, VodList.class))
+            .map(VodList::getList)
+            .doOnError(this::handlerNewVoidListError)
+            .doOnNext(new_opera_hvv::show)
+            .subscribe();
+        // 获取最新动漫
+        Disposable newAnimeSubscribe = HttpHelper.getNewAnimeList()
+            .map(s -> JsonUtil.parseObject(s, VodList.class))
+            .map(VodList::getList)
+            .doOnError(this::handlerNewVoidListError)
+            .doOnNext(new_anime_hvv::show)
+            .subscribe();
+        // 获取最新综艺
+        Disposable newVarietySubscribe = HttpHelper.getNewVarietyList()
+            .map(s -> JsonUtil.parseObject(s, VodList.class))
+            .map(VodList::getList)
+            .doOnError(this::handlerNewVoidListError)
+            .doOnNext(new_variety_hvv::show)
+            .subscribe();
     }
 
     @Override
@@ -172,4 +227,13 @@ public class MainActivity extends MoBaseActivity {
             LogUtils.i("mo--", "轮播图定时器取消");
         }
     }
+
+    /**
+     * 处理获取最近更新列表数据时的错误
+     * @param throwable     发生的错误
+     */
+    private void handlerNewVoidListError(Throwable throwable){
+        throwable.printStackTrace();
+    }
+
 }
