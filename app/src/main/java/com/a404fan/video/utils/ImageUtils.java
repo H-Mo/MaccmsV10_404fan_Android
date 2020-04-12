@@ -33,6 +33,7 @@ public class ImageUtils {
         LogUtils.i("mo--", "加载图片：" + url);
         Glide.with(context)
                 .load(url)
+                .thumbnail(/*sizeMultiplier=*/ 0.25f)
                 .error(def)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .into(imageView);
@@ -56,6 +57,7 @@ public class ImageUtils {
         }
         Glide.with(context)
                 .load(url)
+                .thumbnail(/*sizeMultiplier=*/ 0.25f)
                 .error(def)
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .transform(new GlideRoundTransform(context, px))
@@ -80,6 +82,7 @@ public class ImageUtils {
         }
         Glide.with(context)
             .load(file)
+            .thumbnail(/*sizeMultiplier=*/ 0.25f)
             .into(imageView);
     }
 

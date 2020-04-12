@@ -33,5 +33,4 @@ public class UrlConstant {
      */
     public static final String Vod_Details = Base_Api + "provide/vod/?ac=detail";
 
-
 }

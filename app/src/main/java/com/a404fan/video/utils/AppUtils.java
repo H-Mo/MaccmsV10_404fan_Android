@@ -132,8 +132,6 @@ public class AppUtils {
      * @param n  要跳转的位置
      */
     public static void MoveToPosition(LinearLayoutManager manager, RecyclerView mRecyclerView, int n) {
-
-
         int firstItem = manager.findFirstVisibleItemPosition();
         int lastItem = manager.findLastVisibleItemPosition();
         if (n <= firstItem) {

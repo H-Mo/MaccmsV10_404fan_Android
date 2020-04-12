@@ -13,6 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         android:name=".App"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:ignore="GoogleAppIndexingWarning">
 
         <!--  启动页  -->
@@ -27,6 +28,9 @@
         <!-- 主界面 : 栈唯一，且必须处于栈底  -->
         <activity android:name=".activity.MainActivity"
             android:launchMode="singleTask"/>
+
+        <!-- 搜索页 -->
+        <activity android:name=".activity.SearchActivity" />
 
     </application>
 

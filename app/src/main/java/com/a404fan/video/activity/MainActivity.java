@@ -10,6 +10,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import moe.div.mobase.activity.MoBaseActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +30,8 @@ import com.a404fan.video.utils.JsonUtil;
 import com.a404fan.video.utils.LogUtils;
 import com.a404fan.video.utils.StringUtil;
 import com.a404fan.video.widget.HomeVodListView;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -96,69 +99,35 @@ public class MainActivity extends MoBaseActivity {
 
     @Override
     protected void initData() {
-        // 模拟数据的轮播图
-        String json = "[\n" +
-            "        {\n" +
-            "            \"click\": \"因为太怕痛就全点防御力了\",\n" +
-            "            \"img\": \"https://i2.hdslb.com/bfs/archive/d362ead28d2da7f402bb0cd96196eda3341fc421.jpg\",\n" +
-            "            \"type\": \"key\"\n" +
-            "        },\n" +
-            "        {\n" +
-            "            \"click\": \"某科学的超电磁炮T\",\n" +
-            "            \"img\": \"https://img01.sogoucdn.com/app/a/100520146/F28E7F01DFB7B9CA38FE69F8FB282590\",\n" +
-            "            \"type\": \"key\"\n" +
-            "        },\n" +
-            "        {\n" +
-            "            \"click\": \"虚构推理\",\n" +
-            "            \"img\": \"https://i0.hdslb.com/bfs/archive/5da4508e162add594aef189940583a1362b1c9b8.jpg\",\n" +
-            "            \"type\": \"key\"\n" +
-            "        },\n" +
-            "        {\n" +
-            "            \"click\": \"花牌情缘\",\n" +
-            "            \"img\": \"https://i0.hdslb.com/bfs/archive/fa7021417f61af884bbf67b9668f49bc43951525.jpg\",\n" +
-            "            \"type\": \"key\"\n" +
-            "        },\n" +
-            "        {\n" +
-            "            \"click\": \"异种族风俗娘评鉴指南\",\n" +
-            "            \"img\": \"https://img01.sogoucdn.com/app/a/100520146/FCF6892A008C2A1DD851A903647E2F3D\",\n" +
-            "            \"type\": \"key\"\n" +
-            "        }\n" +
-            "    ]";
-        List<BannerItem> bannerList = JsonUtil.parseList(json, BannerItem.class);
-        if(bannerList.size() == 0){
-            // 没有轮播图
-            return;
-        }
-        // 设置轮播图
-        mBannerAdapter.setData(bannerList);
-        // 通知更新
-        mBannerAdapter.notifyDataSetChanged();
-        // 设置展示到中间
-        AppUtils.MoveToPosition(mBannerLM, banner_rv, mBannerAdapter.getInitPosition());
-        mCurrentPosition = mBannerAdapter.getInitPosition();
+        // 请求轮播图数据
+        HttpHelper.getHomeBanner()
+            .map(s -> JsonUtil.parseList(s, BannerItem.class))
+            .doOnError(this::handlerBannerError)
+            .doOnNext(this::handlerBannerShow)
+            .subscribe();
         // 获取最新电影
-        Disposable newMovieSubscribe = HttpHelper.getNewMovieList()
+        HttpHelper.getNewMovieList()
             .map(s -> JsonUtil.parseObject(s, VodList.class))
             .map(VodList::getList)
             .doOnError(this::handlerNewVoidListError)
             .doOnNext(new_movie_hvv::show)
             .subscribe();
         // 获取最新连续剧
-        Disposable newOperaSubscribe = HttpHelper.getNewOperaList()
+        HttpHelper.getNewOperaList()
             .map(s -> JsonUtil.parseObject(s, VodList.class))
             .map(VodList::getList)
             .doOnError(this::handlerNewVoidListError)
             .doOnNext(new_opera_hvv::show)
             .subscribe();
         // 获取最新动漫
-        Disposable newAnimeSubscribe = HttpHelper.getNewAnimeList()
+        HttpHelper.getNewAnimeList()
             .map(s -> JsonUtil.parseObject(s, VodList.class))
             .map(VodList::getList)
             .doOnError(this::handlerNewVoidListError)
             .doOnNext(new_anime_hvv::show)
             .subscribe();
         // 获取最新综艺
-        Disposable newVarietySubscribe = HttpHelper.getNewVarietyList()
+        HttpHelper.getNewVarietyList()
             .map(s -> JsonUtil.parseObject(s, VodList.class))
             .map(VodList::getList)
             .doOnError(this::handlerNewVoidListError)
@@ -171,7 +140,7 @@ public class MainActivity extends MoBaseActivity {
         // 对滑动事件进行过滤
         banner_rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            public void onScrollStateChanged(@NotNull RecyclerView recyclerView, int newState) {
                 LinearLayoutManager manager = (LinearLayoutManager) recyclerView.getLayoutManager();
                 int firstVisibleItemPosition = manager.findFirstVisibleItemPosition();
                 switch (newState) {
@@ -189,6 +158,25 @@ public class MainActivity extends MoBaseActivity {
                         break;
                 }
             }
+        });
+        // 轮播图点击事件
+        mBannerAdapter.setOnItemClickListener((adapterView, view, position, id) -> {
+            // TODO: 20/4/10
+        });
+        // 搜索事件
+        search_tv.setOnClickListener(view -> {
+            // 关闭软键盘
+            AppUtils.closeSoftInput(this);
+            // 获取搜索关键字
+            String key = search_et.getText().toString();
+            if("".equals(key.trim())){
+                showMoErrorToast("请输入搜索关键字");
+                return;
+            }
+            // 跳转搜索界面
+            Intent intent = new Intent(this, SearchActivity.class);
+            intent.putExtra(SearchActivity.Tag_Key, key);
+            startActivity(intent);
         });
     }
 
@@ -234,6 +222,32 @@ public class MainActivity extends MoBaseActivity {
      */
     private void handlerNewVoidListError(Throwable throwable){
         throwable.printStackTrace();
+    }
+
+    /**
+     * 处理获取首页轮播图时的请求错误
+     * @param throwable     错误信息
+     */
+    private void handlerBannerError(Throwable throwable){
+        throwable.printStackTrace();
+    }
+
+    /**
+     * 处理展示首页轮播图数据
+     * @param bannerList    轮播图数据
+     */
+    private void handlerBannerShow(List<BannerItem> bannerList){
+        if(bannerList.size() == 0){
+            // 没有轮播图
+            return;
+        }
+        // 设置轮播图
+        mBannerAdapter.setData(bannerList);
+        // 通知更新
+        mBannerAdapter.notifyDataSetChanged();
+        // 设置展示到中间
+        AppUtils.MoveToPosition(mBannerLM, banner_rv, mBannerAdapter.getInitPosition());
+        mCurrentPosition = mBannerAdapter.getInitPosition();
     }
 
 }
